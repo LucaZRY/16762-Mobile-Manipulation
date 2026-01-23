@@ -23,31 +23,31 @@ def main():
     robot.lift.wait_until_at_setpoint()
     safe_sleep(0.5)
 
-    robot.end_of_arm.move_to('wrist_yaw', np.radians(30))
+    robot.end_of_arm.move_to('wrist_yaw', np.radians(15))
     robot.push_command()
-    safe_sleep(2.0)
+    safe_sleep(5.0)
 
-    robot.end_of_arm.move_to('wrist_pitch', np.radians(30))
+    robot.end_of_arm.move_to('wrist_pitch', np.radians(15))
     robot.push_command()
-    safe_sleep(2.0)
+    safe_sleep(5.0)
 
-    robot.end_of_arm.move_to('wrist_roll', np.radians(30))
+    robot.end_of_arm.move_to('wrist_roll', np.radians(15))
     robot.push_command()
-    safe_sleep(2.0)
+    safe_sleep(5.0)
 
-    robot.end_of_arm.move_to('stretch_gripper', 50)  # open (visible)
+    robot.end_of_arm.move_to('stretch_gripper', 20)  # open (visible)
     robot.push_command()
-    safe_sleep(2.0)
+    safe_sleep(5.0)
 
     robot.end_of_arm.move_to('stretch_gripper', 0)   # close
     robot.push_command()
-    safe_sleep(2.0)
+    safe_sleep(.0)
 
-    robot.head.move_by('head_pan', np.radians(45))
+    robot.head.move_by('head_pan', np.radians(10))
     robot.push_command()
     safe_sleep(2.0)
 
-    robot.head.move_by('head_tilt', np.radians(30))
+    robot.head.move_by('head_tilt', np.radians(20))
     robot.push_command()
     safe_sleep(2.0)
 
@@ -57,19 +57,19 @@ def main():
 
     robot.base.translate_by(0.5)
     robot.push_command()
-    safe_sleep(5.0)
+    safe_sleep(10.0)
 
     robot.base.rotate_by(np.radians(180))
     robot.push_command()
-    safe_sleep(5.0)
+    safe_sleep(10.0)
 
     robot.base.translate_by(0.5)
     robot.push_command()
-    safe_sleep(5.0)
+    safe_sleep(10.0)
         
     robot.stow()
     robot.push_command()
-    safe_sleep(3.0)
+    safe_sleep(5.0)
 
     robot.stop()
 
