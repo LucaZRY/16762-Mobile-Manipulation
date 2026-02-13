@@ -71,9 +71,10 @@ class MoveMe(HelloNode):
                 
             elif i == 3:
                 # Pose 3 → 4: Return all arm motors to stow pose
+                # First retract arm and wrist, keep lift up to avoid collision
                 goal_state.set_joint_group_positions(planning_group, 
                     [0.0, 0.0, 0.0,  # Base doesn't move
-                    0.0,  # Lower lift to stow
+                    0.2,  # Keep lift slightly up to avoid self-collision during retraction
                     0.0, 0.0, 0.0, 0.0,  # Retract all arm segments
                     0.0,  # Wrist yaw to neutral
                     0.0,  # Wrist pitch to neutral
@@ -84,9 +85,18 @@ class MoveMe(HelloNode):
             moveit_plan.set_goal_state(robot_state=goal_state)
             
             plan = moveit_plan.plan(parameters=planning_params)
+            
+            # Check if planning was successful
+            if plan is None or plan.trajectory is None:
+                print(f'ERROR: Planning failed for step {i}')
+                break
+            
             # print(plan.trajectory.get_robot_trajectory_msg())
     
-            self.execute_plan(plan)
+            success = self.execute_plan(plan)
+            if not success:
+                print(f'ERROR: Execution failed for step {i}')
+                break
 
     def execute_plan(self, plan):
         # NOTE: You don't need to edit this function
@@ -107,7 +117,7 @@ class MoveMe(HelloNode):
             
             if not goal_handle.accepted:
                 self.get_logger().error(f"Segment {i+1} rejected!")
-                break
+                return False
             
             res_future = goal_handle.get_result_async()
             rclpy.spin_until_future_complete(self, res_future)
@@ -115,7 +125,9 @@ class MoveMe(HelloNode):
             
             if res.result.error_code != res.result.SUCCESSFUL:
                 self.get_logger().error(f"Segment {i+1} failed! Code: {res.result.error_code}")
-                break
+                return False
+        
+        return True
 
     def get_joint_pos(self, joint_name):
         return self.joint_state.position[self.joint_state.name.index(joint_name)]
