@@ -23,25 +23,18 @@ class MoveMe(HelloNode):
         # We'll execute 4 planning steps to reach poses 1, 2, 3, and 4
         
         for i in range(4):
-            print(f'--- Planning Step {i+1}/4 ---')
+            print(f'--- Planning Step {i} ---')
             goal_state = RobotState(moveit.get_robot_model())
 
-            # Joint ordering: [x, y, theta, lift, arm/4, arm/4, arm/4, arm/4, yaw, pitch, roll]
-            # Index mapping:
-            # 0: x (base translation)
-            # 1: y (base translation) 
-            # 2: theta (base rotation)
-            # 3: joint_lift
-            # 4-7: joint_arm (4 segments: l3, l2, l1, l0)
-            # 8: joint_wrist_yaw
-            # 9: joint_wrist_pitch
-            # 10: joint_wrist_roll
+            # Ordering: [x, y, theta, lift, arm/4, arm/4, arm/4, arm/4, yaw, pitch, roll]
+            # For driving the base: the positive x-axis is pointing out of the front of the robot (the flat side of the base). 
+            # Positive y-axis is on the left of the robot (opposite direction the arm is facing).
             
             if i == 0:
                 # Pose 0 → 1: Lift arm to 0.5 m
-                # Keep base stationary, set lift to 0.5, keep arm segments and wrist as they are
+                # Keep base stationary (no movement), set lift to 0.5, keep arm segments and wrist as they are
                 goal_state.set_joint_group_positions(planning_group, 
-                    [0.0, 0.0, 0.0,  # Base stays at origin
+                    [0.0, 0.0, 0.0,  # Base doesn't move
                     0.5,  # Lift to 0.5 m
                     self.get_joint_pos('joint_arm_l3'), 
                     self.get_joint_pos('joint_arm_l2'), 
@@ -55,9 +48,9 @@ class MoveMe(HelloNode):
             elif i == 1:
                 # Pose 1 → 2: Extend arm to 0.4 m
                 # The arm has 4 segments, each gets 0.4/4 = 0.1 m
-                # Keep base and lift at previous positions
+                # Keep base stationary and lift at previous position (0.5 m)
                 goal_state.set_joint_group_positions(planning_group, 
-                    [0.0, 0.0, 0.0,  # Base stays at origin
+                    [0.0, 0.0, 0.0,  # Base doesn't move
                     0.5,  # Keep lift at 0.5 m
                     0.1, 0.1, 0.1, 0.1,  # Extend each arm segment to 0.1 m (total 0.4 m)
                     self.get_joint_pos('joint_wrist_yaw'), 
@@ -67,9 +60,9 @@ class MoveMe(HelloNode):
                 
             elif i == 2:
                 # Pose 2 → 3: Rotate wrist 45 degrees (0.785398 radians) on each of 3 axes
-                # Keep base, lift, and arm extension from previous pose
+                # Keep base stationary, lift at 0.5 m, and arm extended to 0.4 m
                 goal_state.set_joint_group_positions(planning_group, 
-                    [0.0, 0.0, 0.0,  # Base stays at origin
+                    [0.0, 0.0, 0.0,  # Base doesn't move
                     0.5,  # Keep lift at 0.5 m
                     0.1, 0.1, 0.1, 0.1,  # Keep arm extended to 0.4 m
                     np.radians(45),  # Wrist yaw: 45 degrees
@@ -81,7 +74,7 @@ class MoveMe(HelloNode):
                 # Pose 3 → 4: Return all arm motors to stow pose
                 # Stow position typically means: lift down, arm retracted, wrist neutral
                 goal_state.set_joint_group_positions(planning_group, 
-                    [0.0, 0.0, 0.0,  # Base stays at origin
+                    [0.0, 0.0, 0.0,  # Base doesn't move
                     0.0,  # Lower lift to minimum (stow)
                     0.0, 0.0, 0.0, 0.0,  # Retract all arm segments
                     0.0,  # Wrist yaw to neutral
@@ -89,16 +82,13 @@ class MoveMe(HelloNode):
                     0.0]  # Wrist roll to neutral
                 )
 
-            # Plan and execute the trajectory
             moveit_plan.set_start_state_to_current_state()
             moveit_plan.set_goal_state(robot_state=goal_state)
             
             plan = moveit_plan.plan(parameters=planning_params)
-            
-            # Execute the planned trajectory
+            # print(plan.trajectory.get_robot_trajectory_msg())
+    
             self.execute_plan(plan)
-            
-            print(f'--- Completed Step {i+1}/4 ---\n')
 
     def execute_plan(self, plan):
         # NOTE: You don't need to edit this function
