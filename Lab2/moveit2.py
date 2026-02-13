@@ -32,7 +32,6 @@ class MoveMe(HelloNode):
             
             if i == 0:
                 # Pose 0 → 1: Lift arm to 0.5 m
-                # Keep base stationary (no movement), set lift to 0.5, keep arm segments and wrist as they are
                 goal_state.set_joint_group_positions(planning_group, 
                     [0.0, 0.0, 0.0,  # Base doesn't move
                     0.5,  # Lift to 0.5 m
@@ -46,12 +45,10 @@ class MoveMe(HelloNode):
                 )
                 
             elif i == 1:
-                # Pose 1 → 2: Extend arm to 0.4 m
-                # The arm has 4 segments, each gets 0.4/4 = 0.1 m
-                # Keep base stationary and lift at previous position (0.5 m)
+                # Pose 1 → 2: Extend arm to 0.4 m (0.1 m per segment)
                 goal_state.set_joint_group_positions(planning_group, 
                     [0.0, 0.0, 0.0,  # Base doesn't move
-                    0.5,  # Keep lift at 0.5 m
+                    self.get_joint_pos('joint_lift'),  # Keep current lift position
                     0.1, 0.1, 0.1, 0.1,  # Extend each arm segment to 0.1 m (total 0.4 m)
                     self.get_joint_pos('joint_wrist_yaw'), 
                     self.get_joint_pos('joint_wrist_pitch'), 
@@ -59,23 +56,24 @@ class MoveMe(HelloNode):
                 )
                 
             elif i == 2:
-                # Pose 2 → 3: Rotate wrist 45 degrees (0.785398 radians) on each of 3 axes
-                # Keep base stationary, lift at 0.5 m, and arm extended to 0.4 m
+                # Pose 2 → 3: Rotate wrist 45 degrees on each of 3 axes
                 goal_state.set_joint_group_positions(planning_group, 
                     [0.0, 0.0, 0.0,  # Base doesn't move
-                    0.5,  # Keep lift at 0.5 m
-                    0.1, 0.1, 0.1, 0.1,  # Keep arm extended to 0.4 m
-                    np.radians(45),  # Wrist yaw: 45 degrees
-                    np.radians(45),  # Wrist pitch: 45 degrees
-                    np.radians(45)]  # Wrist roll: 45 degrees
+                    self.get_joint_pos('joint_lift'),  # Keep current lift
+                    self.get_joint_pos('joint_arm_l3'), 
+                    self.get_joint_pos('joint_arm_l2'), 
+                    self.get_joint_pos('joint_arm_l1'), 
+                    self.get_joint_pos('joint_arm_l0'),  # Keep current arm extension
+                    self.get_joint_pos('joint_wrist_yaw') + np.radians(45),  # Add 45 degrees to current yaw
+                    self.get_joint_pos('joint_wrist_pitch') + np.radians(45),  # Add 45 degrees to current pitch
+                    self.get_joint_pos('joint_wrist_roll') + np.radians(45)]  # Add 45 degrees to current roll
                 )
                 
             elif i == 3:
                 # Pose 3 → 4: Return all arm motors to stow pose
-                # Stow position typically means: lift down, arm retracted, wrist neutral
                 goal_state.set_joint_group_positions(planning_group, 
                     [0.0, 0.0, 0.0,  # Base doesn't move
-                    0.0,  # Lower lift to minimum (stow)
+                    0.0,  # Lower lift to stow
                     0.0, 0.0, 0.0, 0.0,  # Retract all arm segments
                     0.0,  # Wrist yaw to neutral
                     0.0,  # Wrist pitch to neutral
