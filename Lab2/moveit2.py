@@ -47,7 +47,7 @@ class MoveMe(HelloNode):
             elif i == 1:
                 # Step 2: Turn left 90 degrees (pi/2 radians)
                 goal_state.set_joint_group_positions(planning_group, 
-                    [0.2, 0.0, np.pi/2,  # Stay at x=0.2, rotate 90 degrees left
+                    [0.2, 0.2, 0.0,  # Stay at x=0.2, rotate 90 degrees left
                     self.get_joint_pos('joint_lift'), 
                     self.get_joint_pos('joint_arm_l3'), 
                     self.get_joint_pos('joint_arm_l2'), 
