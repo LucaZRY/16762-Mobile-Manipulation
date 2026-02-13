@@ -62,7 +62,7 @@ class MoveMe(HelloNode):
                 # Step 3: Go straight forward 0.2m (in the new direction)
                 # After turning left, "forward" is now in the +y direction
                 goal_state.set_joint_group_positions(planning_group, 
-                    [0.0, 0.4, 0.0,  # Move forward 0.2m in new direction (increases y)
+                    [0.0, 0.4, -np.pi/2,  # Move forward 0.2m in new direction (increases y)
                     self.get_joint_pos('joint_lift'), 
                     self.get_joint_pos('joint_arm_l3'), 
                     self.get_joint_pos('joint_arm_l2'), 
