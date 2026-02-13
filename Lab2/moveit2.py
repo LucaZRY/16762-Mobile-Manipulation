@@ -70,9 +70,9 @@ class MoveMe(HelloNode):
                     self.get_joint_pos('joint_arm_l2'), 
                     self.get_joint_pos('joint_arm_l1'), 
                     self.get_joint_pos('joint_arm_l0'), 
-                    self.get_joint_pos('joint_wrist_yaw')+ np.radians(45), 
-                    self.get_joint_pos('joint_wrist_pitch')+ np.radians(45), 
-                    self.get_joint_pos('joint_wrist_roll')+ np.radians(45)]
+                    self.get_joint_pos('joint_wrist_yaw'), 
+                    self.get_joint_pos('joint_wrist_pitch'), 
+                    self.get_joint_pos('joint_wrist_roll')]
                 )
 
             elif i == 3:
