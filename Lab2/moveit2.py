@@ -33,7 +33,7 @@ class MoveMe(HelloNode):
             if i == 0:
                 # Step 1: Go straight forward 0.2m
                 goal_state.set_joint_group_positions(planning_group, 
-                    [0.1, 0.1, -np.pi/2,   # Move forward 0.2m
+                    [0.1, 0.1, -np.pi/2 + 0.1,   # Move forward 0.2m
                     0.5,
                     #self.get_joint_pos('joint_lift'), 
                     self.get_joint_pos('joint_arm_l3'), 
@@ -48,7 +48,7 @@ class MoveMe(HelloNode):
             elif i == 1:
                 # Step 2: Turn left 90 degrees (pi/2 radians)
                 goal_state.set_joint_group_positions(planning_group, 
-                    [0.3, 0.0, -np.pi/2,  # Stay at x=0.2, rotate 90 degrees left
+                    [0.3, 0.0, -np.pi/2 - 0.1,  # Stay at x=0.2, rotate 90 degrees left
                     self.get_joint_pos('joint_lift'), 
                     0.1, 0.1, 0.1, 0.1,
                     # self.get_joint_pos('joint_arm_l3'), 
@@ -79,7 +79,7 @@ class MoveMe(HelloNode):
                 # Step 3: Go straight forward 0.2m (in the new direction)
                 # After turning left, "forward" is now in the +y direction
                 goal_state.set_joint_group_positions(planning_group, 
-                    [-0.1, -0.1, -np.pi,  # Move forward 0.2m in new direction (increases y)
+                    [-0.1, -0.1, -np.pi + 0.01,  # Move forward 0.2m in new direction (increases y)
                      0.2,  # Lower lift (keep slightly up to avoid collision)
                     0.0, 0.0, 0.0, 0.0,  # Retract arm
                     0.0,  # Wrist yaw to neutral
