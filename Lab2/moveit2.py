@@ -34,7 +34,8 @@ class MoveMe(HelloNode):
                 # Step 1: Go straight forward 0.2m
                 goal_state.set_joint_group_positions(planning_group, 
                     [0.2, 0.2, -np.pi/2,   # Move forward 0.2m
-                    self.get_joint_pos('joint_lift'), 
+                    0.5,
+                    #self.get_joint_pos('joint_lift'), 
                     self.get_joint_pos('joint_arm_l3'), 
                     self.get_joint_pos('joint_arm_l2'), 
                     self.get_joint_pos('joint_arm_l1'), 
@@ -49,10 +50,11 @@ class MoveMe(HelloNode):
                 goal_state.set_joint_group_positions(planning_group, 
                     [0.6, 0.0, -np.pi/2,  # Stay at x=0.2, rotate 90 degrees left
                     self.get_joint_pos('joint_lift'), 
-                    self.get_joint_pos('joint_arm_l3'), 
-                    self.get_joint_pos('joint_arm_l2'), 
-                    self.get_joint_pos('joint_arm_l1'), 
-                    self.get_joint_pos('joint_arm_l0'), 
+                    0.1, 0.1, 0.1, 0.1,
+                    # self.get_joint_pos('joint_arm_l3'), 
+                    # self.get_joint_pos('joint_arm_l2'), 
+                    # self.get_joint_pos('joint_arm_l1'), 
+                    # self.get_joint_pos('joint_arm_l0'), 
                     self.get_joint_pos('joint_wrist_yaw'), 
                     self.get_joint_pos('joint_wrist_pitch'), 
                     self.get_joint_pos('joint_wrist_roll')]
@@ -68,9 +70,9 @@ class MoveMe(HelloNode):
                     self.get_joint_pos('joint_arm_l2'), 
                     self.get_joint_pos('joint_arm_l1'), 
                     self.get_joint_pos('joint_arm_l0'), 
-                    self.get_joint_pos('joint_wrist_yaw'), 
-                    self.get_joint_pos('joint_wrist_pitch'), 
-                    self.get_joint_pos('joint_wrist_roll')]
+                    self.get_joint_pos('joint_wrist_yaw')+ np.radians(45), 
+                    self.get_joint_pos('joint_wrist_pitch')+ np.radians(45), 
+                    self.get_joint_pos('joint_wrist_roll')+ np.radians(45)]
                 )
 
             elif i == 3:
@@ -78,14 +80,20 @@ class MoveMe(HelloNode):
                 # After turning left, "forward" is now in the +y direction
                 goal_state.set_joint_group_positions(planning_group, 
                     [0.2, 0.2, 0.0,  # Move forward 0.2m in new direction (increases y)
-                    self.get_joint_pos('joint_lift'), 
-                    self.get_joint_pos('joint_arm_l3'), 
-                    self.get_joint_pos('joint_arm_l2'), 
-                    self.get_joint_pos('joint_arm_l1'), 
-                    self.get_joint_pos('joint_arm_l0'), 
-                    self.get_joint_pos('joint_wrist_yaw'), 
-                    self.get_joint_pos('joint_wrist_pitch'), 
-                    self.get_joint_pos('joint_wrist_roll')]
+                     0.2,  # Lower lift (keep slightly up to avoid collision)
+                    0.0, 0.0, 0.0, 0.0,  # Retract arm
+                    0.0,  # Wrist yaw to neutral
+                    0.0,  # Wrist pitch to neutral
+                    0.0
+                    # self.get_joint_pos('joint_lift'), 
+                    # self.get_joint_pos('joint_arm_l3'), 
+                    # self.get_joint_pos('joint_arm_l2'), 
+                    # self.get_joint_pos('joint_arm_l1'), 
+                    # self.get_joint_pos('joint_arm_l0'), 
+                    # self.get_joint_pos('joint_wrist_yaw'), 
+                    # self.get_joint_pos('joint_wrist_pitch'), 
+                    # self.get_joint_pos('joint_wrist_roll')
+                    ]
                 )
 
             moveit_plan.set_start_state_to_current_state()
