@@ -22,7 +22,7 @@ class MoveMe(HelloNode):
         # Pose 0 is the current stowed position
         # We'll execute 4 planning steps to reach poses 1, 2, 3, and 4
         
-        for i in range(4):
+        for i in range(3):
             print(f'--- Planning Step {i} ---')
             goal_state = RobotState(moveit.get_robot_model())
 
@@ -31,9 +31,9 @@ class MoveMe(HelloNode):
             # Positive y-axis is on the left of the robot (opposite direction the arm is facing).
             
             if i == 0:
-                # Pose 0 → 1: Move LEFT 20cm (y = -0.2)
+                # Step 1: Go straight forward 0.2m
                 goal_state.set_joint_group_positions(planning_group, 
-                    [0.0, -0.2, 0.0,  # Move left 20cm (negative y)
+                    [0.2, 0.0, 0.0,  # Move forward 0.2m
                     self.get_joint_pos('joint_lift'), 
                     self.get_joint_pos('joint_arm_l3'), 
                     self.get_joint_pos('joint_arm_l2'), 
@@ -45,9 +45,9 @@ class MoveMe(HelloNode):
                 )
                 
             elif i == 1:
-                # Pose 1 → 2: Move FORWARD 40cm (x = 0.4)
+                # Step 2: Turn left 90 degrees (pi/2 radians)
                 goal_state.set_joint_group_positions(planning_group, 
-                    [0.4, -0.2, 0.0,  # Move forward 40cm from start, stay at y=-0.2
+                    [0.2, 0.0, np.pi/2,  # Stay at x=0.2, rotate 90 degrees left
                     self.get_joint_pos('joint_lift'), 
                     self.get_joint_pos('joint_arm_l3'), 
                     self.get_joint_pos('joint_arm_l2'), 
@@ -59,23 +59,10 @@ class MoveMe(HelloNode):
                 )
                 
             elif i == 2:
-                # Pose 2 → 3: Move RIGHT 20cm (y = 0)
+                # Step 3: Go straight forward 0.2m (in the new direction)
+                # After turning left, "forward" is now in the +y direction
                 goal_state.set_joint_group_positions(planning_group, 
-                    [0.4, 0.0, 0.0,  # Move right 20cm (back to y=0), stay at x=0.4
-                    self.get_joint_pos('joint_lift'), 
-                    self.get_joint_pos('joint_arm_l3'), 
-                    self.get_joint_pos('joint_arm_l2'), 
-                    self.get_joint_pos('joint_arm_l1'), 
-                    self.get_joint_pos('joint_arm_l0'), 
-                    self.get_joint_pos('joint_wrist_yaw'), 
-                    self.get_joint_pos('joint_wrist_pitch'), 
-                    self.get_joint_pos('joint_wrist_roll')]
-                )
-                
-            elif i == 3:
-                # Pose 3 → 4: Move BACKWARD 20cm (x = 0.2)
-                goal_state.set_joint_group_positions(planning_group, 
-                    [0.2, 0.0, 0.0,  # Move back 20cm (x=0.2), stay at y=0
+                    [0.2, 0.2, np.pi/2,  # Move forward 0.2m in new direction (increases y)
                     self.get_joint_pos('joint_lift'), 
                     self.get_joint_pos('joint_arm_l3'), 
                     self.get_joint_pos('joint_arm_l2'), 
