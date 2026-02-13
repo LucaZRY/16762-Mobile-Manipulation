@@ -18,44 +18,87 @@ class MoveMe(HelloNode):
         planning_group = 'mobile_base_arm'
         moveit, moveit_plan, planning_params = moveit2_utils.setup_moveit(planning_group)
         
+        # Define the trajectory steps
+        # Pose 0 is the current stowed position
+        # We'll execute 4 planning steps to reach poses 1, 2, 3, and 4
+        
         for i in range(4):
-            print(f'--- Planning Step {i} ---')
+            print(f'--- Planning Step {i+1}/4 ---')
             goal_state = RobotState(moveit.get_robot_model())
-          
-            # # Ordering: [x, y, theta, lift, arm/4, arm/4, arm/4, arm/4, yaw, pitch, roll]
-            # goal_state.set_joint_group_positions(planning_group, [0.3, 0.0, 0.0, self.get_joint_pos('joint_lift'), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-            # # TODO: Your code will likely go here. Note that I gave you a for loop already, which you can edit and use.
 
-
+            # Joint ordering: [x, y, theta, lift, arm/4, arm/4, arm/4, arm/4, yaw, pitch, roll]
+            # Index mapping:
+            # 0: x (base translation)
+            # 1: y (base translation) 
+            # 2: theta (base rotation)
+            # 3: joint_lift
+            # 4-7: joint_arm (4 segments: l3, l2, l1, l0)
+            # 8: joint_wrist_yaw
+            # 9: joint_wrist_pitch
+            # 10: joint_wrist_roll
+            
             if i == 0:
-                # Pose 0 -> 1: Lift arm to 0.5 m
+                # Pose 0 → 1: Lift arm to 0.5 m
+                # Keep base stationary, set lift to 0.5, keep arm segments and wrist as they are
                 goal_state.set_joint_group_positions(planning_group, 
-                    [0.0, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-            
-            elif i == 1:
-                # Pose 1 -> 2: Extend arm to 0.4 m (arm extension is split across 4 joints, so 0.4/4 = 0.1 each)
-                goal_state.set_joint_group_positions(planning_group, 
-                    [0.0, 0.0, 0.0, 0.5, 0.1, 0.1, 0.1, 0.1, 0.0, 0.0, 0.0])
-            
-            elif i == 2:
-                # Pose 2 -> 3: Rotate wrist 45 degrees (0.785398 radians) along each of the 3 axes (yaw, pitch, roll)
-                goal_state.set_joint_group_positions(planning_group, 
-                    [0.0, 0.0, 0.0, 0.5, 0.1, 0.1, 0.1, 0.1, 0.785398, 0.785398, 0.785398])
-            
-            elif i == 3:
-                # Pose 3 -> 4: Bring all arm motors back to stow pose (all zeros)
-                goal_state.set_joint_group_positions(planning_group, 
-                    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+                    [0.0, 0.0, 0.0,  # Base stays at origin
+                    0.5,  # Lift to 0.5 m
+                    self.get_joint_pos('joint_arm_l3'), 
+                    self.get_joint_pos('joint_arm_l2'), 
+                    self.get_joint_pos('joint_arm_l1'), 
+                    self.get_joint_pos('joint_arm_l0'), 
+                    self.get_joint_pos('joint_wrist_yaw'), 
+                    self.get_joint_pos('joint_wrist_pitch'), 
+                    self.get_joint_pos('joint_wrist_roll')]
+                )
                 
+            elif i == 1:
+                # Pose 1 → 2: Extend arm to 0.4 m
+                # The arm has 4 segments, each gets 0.4/4 = 0.1 m
+                # Keep base and lift at previous positions
+                goal_state.set_joint_group_positions(planning_group, 
+                    [0.0, 0.0, 0.0,  # Base stays at origin
+                    0.5,  # Keep lift at 0.5 m
+                    0.1, 0.1, 0.1, 0.1,  # Extend each arm segment to 0.1 m (total 0.4 m)
+                    self.get_joint_pos('joint_wrist_yaw'), 
+                    self.get_joint_pos('joint_wrist_pitch'), 
+                    self.get_joint_pos('joint_wrist_roll')]
+                )
+                
+            elif i == 2:
+                # Pose 2 → 3: Rotate wrist 45 degrees (0.785398 radians) on each of 3 axes
+                # Keep base, lift, and arm extension from previous pose
+                goal_state.set_joint_group_positions(planning_group, 
+                    [0.0, 0.0, 0.0,  # Base stays at origin
+                    0.5,  # Keep lift at 0.5 m
+                    0.1, 0.1, 0.1, 0.1,  # Keep arm extended to 0.4 m
+                    np.radians(45),  # Wrist yaw: 45 degrees
+                    np.radians(45),  # Wrist pitch: 45 degrees
+                    np.radians(45)]  # Wrist roll: 45 degrees
+                )
+                
+            elif i == 3:
+                # Pose 3 → 4: Return all arm motors to stow pose
+                # Stow position typically means: lift down, arm retracted, wrist neutral
+                goal_state.set_joint_group_positions(planning_group, 
+                    [0.0, 0.0, 0.0,  # Base stays at origin
+                    0.0,  # Lower lift to minimum (stow)
+                    0.0, 0.0, 0.0, 0.0,  # Retract all arm segments
+                    0.0,  # Wrist yaw to neutral
+                    0.0,  # Wrist pitch to neutral
+                    0.0]  # Wrist roll to neutral
+                )
 
-
+            # Plan and execute the trajectory
             moveit_plan.set_start_state_to_current_state()
             moveit_plan.set_goal_state(robot_state=goal_state)
             
             plan = moveit_plan.plan(parameters=planning_params)
-            # print(plan.trajectory.get_robot_trajectory_msg())
-    
+            
+            # Execute the planned trajectory
             self.execute_plan(plan)
+            
+            print(f'--- Completed Step {i+1}/4 ---\n')
 
     def execute_plan(self, plan):
         # NOTE: You don't need to edit this function
