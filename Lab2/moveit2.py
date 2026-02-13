@@ -33,7 +33,7 @@ class MoveMe(HelloNode):
             if i == 0:
                 # Step 1: Go straight forward 0.2m
                 goal_state.set_joint_group_positions(planning_group, 
-                    [0.2, 0.2, -np.pi/2, 0.5  # Move forward 0.2m
+                    [0.2, 0.2, -np.pi/2, 0.5,  # Move forward 0.2m
                     self.get_joint_pos('joint_lift'), 
                     self.get_joint_pos('joint_arm_l3'), 
                     self.get_joint_pos('joint_arm_l2'), 
