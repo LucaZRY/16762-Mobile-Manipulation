@@ -85,11 +85,11 @@ class YOLOEObjectDetector(Node):
         #   plotted in a cv2 window by detection_utils.visualize_detection_masks()
         # in part 2, you may need to make changes to the code to handle the head camera orientation
 
-        # self.latest_color = ...
-        # self.latest_depth = ...
-        # self.latest_color_cam_info = ...
+        self.latest_color = self.bridge.imgmsg_to_cv2(color_msg, desired_encoding='bgr8')
+        self.latest_depth = self.bridge.imgmsg_to_cv2(depth_msg, desired_encoding='16UC1')
+        self.latest_color_cam_info = color_cam_info_msg
 
-        pass
+        # pass
         # TODO: -------------- end ---------------
 
 
@@ -101,6 +101,7 @@ class YOLOEObjectDetector(Node):
 
 
         detections = None
+
         # TODO: -------------- end ---------------
 
         # create visualizations from the detections
@@ -133,10 +134,35 @@ class YOLOEObjectDetector(Node):
         #   find the depth at the centroid and project it to 3D using detection_utils.pixel_to_3d()
         #   convert that pose to a PoseStamped msg using detection_utils.get_pose_msg()
         #   save that message to self.goal_pose_msg
+
+        target = detections[target_idx]
+        cx, cy = target['centroid']   # (col, row) == (x, y) pixel coordinates
+
+        # Read raw depth at the centroid (uint16, millimetres)
+        depth_mm = int(self.latest_depth[int(cy), int(cx)])
+
+        if depth_mm == 0:
+            self.get_logger().warn('Centroid depth is zero — object may be out of range.')
+            return
+
+        # pixel_to_3d expects: (xy_pix tuple, z_depth_mm, CameraInfo msg)
+        # it handles the mm→m conversion internally
+        point_3d = detection_utils.pixel_to_3d(
+            (cx, cy),
+            depth_mm,
+            self.latest_color_cam_info
+        )
+
+        timestamp = self.latest_color_cam_info.header.stamp
+        frame_id  = self.latest_color_cam_info.header.frame_id
+        self.goal_pose_msg = detection_utils.get_pose_msg(timestamp, frame_id, point_3d)
+
         # in part 2, edit the code you wrote for part 1 to now project all points in the mask to 3D,
         #   then get the centroid of the resulting pointcloud to use as the goal pose (instead of the 2D centroid in part 1)
 
         # self.goal_pose_msg = ...
+
+
         # TODO: -------------- end ---------------
 
 

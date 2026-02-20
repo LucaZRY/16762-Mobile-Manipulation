@@ -44,7 +44,16 @@ class IKTargetFollowing(HelloNode):
         # fill with your response
         #   transform the goal pose to the base frame
 
-        goal_transformed = None
+        # goal_transformed = None
+
+        import tf2_geometry_msgs
+        transform = self.tf_buffer.lookup_transform(
+            self.target_frame,          # target frame  (base_link)
+            goal_msg.header.frame_id,   # source frame  (e.g. gripper_camera_color_optical_frame)
+            rclpy.time.Time()           # use the most recent available transform
+        )
+        goal_transformed = tf2_geometry_msgs.do_transform_pose_stamped(goal_msg, transform)
+        
         # TODO: -------------- end ---------------
 
         return goal_transformed
@@ -53,6 +62,12 @@ class IKTargetFollowing(HelloNode):
         # TODO: ------------- start --------------
         # fill with your response
         #   transform the gripper pose to the base frame
+
+        gripper_transformed = self.tf_buffer.lookup_transform(
+            self.target_frame,          # target frame  (base_link)
+            self.gripper_frame,        # source frame  (link_grasp_center)
+            rclpy.time.Time()           # use the most recent available transform
+        )
 
         gripper_transformed = None
         # TODO: -------------- end ---------------
@@ -78,7 +93,12 @@ class IKTargetFollowing(HelloNode):
         # fill with your response
         #   use the same functions you used for IK in Lab 2, now in `ik_ros_utils.py`, 
         #   to move the robot to the transformed goal point.
-        q_soln = None
+        with self.joint_states_lock:
+            joint_states_snapshot = self.joint_state
+        
+        q_init = ik.get_current_configuration(joint_states_snapshot)
+        q_soln = ik.get_grasp_goal(waypoint_pos, waypoint_orient, q_init)
+
         # TODO: -------------- end ---------------
 
         # NOTE: if you find that the robot's base is moving too much, its likely that the ik solver is
@@ -103,8 +123,17 @@ class IKTargetFollowing(HelloNode):
         #   at least 2Hz) to reach before the next goal is published
         #   in this case, find a waypoint toward the goal position that is delta away from the gripper position (make some progress towards the goal)
         #   otherwise, the goal is close and we can move there directly
+        
+        # dist = np.linalg.norm(np.array(goal_pos) - np.array(gripper_pos))
+        dist = np.linalg.norm(goal_pos - gripper_pos)
 
-        waypoint_pos = None
+        if dist > self.delta:
+            direction = (goal_pos - gripper_pos) / dist  # unit vector from gripper to goal
+            waypoint_pos = gripper_pos + direction * self.delta  # move delta towards the goal
+        else:
+            waypoint_pos = goal_pos
+
+        # waypoint_pos = None
         # TODO: -------------- end ---------------
 
         # use an zero rotation for the waypoint (its a point so we don't need to worry about orientation)
@@ -135,6 +164,23 @@ class IKTargetFollowing(HelloNode):
         # fill with your response
         #   create a tf2 buffer and listener
         #   create a subscriber to the goal pose published by your object detector
+
+        self.tf_buffer = tf2_ros.Buffer()
+        self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
+
+        # self.goal_sub = self.create_subscription(
+        #     PoseStamped,
+        #     '/goal_pose', 
+        #     callback=self.goal_callback, 
+        #     qos_profile=1
+        #     )
+        self.goal_sub = self.create_subscription(
+            PoseStamped,
+            '/object_detector/goal_pose',
+            self.goal_callback,
+            qos_profile=1,
+            callback_group=self.callback_group
+        )
         # TODO: -------------- end ---------------
 
 
